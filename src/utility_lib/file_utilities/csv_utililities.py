@@ -1,0 +1,211 @@
+# -*- coding: utf-8 -*-
+"""Utilities for handling csv files
+
+Todo:
+    * Write some tests
+
+
+Created on Nov 27, 2017
+
+@author: croaker
+"""
+
+# TODO save a test file in the fixture.
+# TODO test the loading functions.
+# TODO round robin all the save and load functions, compare for equality
+# TODO compose writers like readers, make factories.
+import csv
+from collections import namedtuple
+from pathlib import Path
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    Iterable,
+    NamedTuple,
+    Optional,
+    Sequence,
+    TextIO,
+)
+
+
+def write_list_of_dicts_to_csv(
+    data: Sequence[Dict[str, Any]], file_path: Path, parents=False, exist_ok=True
+) -> int:
+    """
+    Save a list of dicts to csv. Makes parent directories if they don't exist.
+
+    Parameters
+    ----------
+    data : Sequence[Dict[str, Any]]
+        Data to save.
+    file_path : Path
+        Path to saved file. Existing files will be overwritten.
+    parents : bool, optional
+        Make parent directories if they don't exist. As used by `Path.mkdir`, by default False
+    exist_ok : bool, optional
+        Suppress exception if parent directory exists as directory. As used by `Path.mkdir`, by default True
+
+    Returns
+    -------
+    int
+        records writen.
+
+    Raises
+    ------
+    Exception
+        Any exception that can be raised from Path.mkdir or Path.open
+    """
+    if parents:
+        file_path.parent.mkdir(parents=parents, exist_ok=exist_ok)
+    with file_path.open("w", encoding="utf8", newline="") as file_out:
+        writer = csv.DictWriter(file_out, fieldnames=list(data[0].keys()))
+        writer.writeheader()
+        total_count = 0
+        for count, item in enumerate(data):
+            writer.writerow(item)
+            total_count = count
+    return total_count + 1
+
+
+def write_named_tuple_to_csv(
+    data: Sequence[NamedTuple], file_path: Path, parents=False, exist_ok=True
+) -> int:
+    if parents:
+        file_path.parent.mkdir(parents=parents, exist_ok=exist_ok)
+    with file_path.open("w", encoding="utf8", newline="") as file_out:
+        writer = csv.writer(file_out)
+        writer.writerow(data[0]._fields)
+        total_count = 0
+        for count, item in enumerate(data):
+            writer.writerow(item)
+            total_count = count
+    return total_count + 1
+
+
+def write_list_to_csv(
+    data: Iterable[Sequence],
+    file_path: Path,
+    parents=False,
+    exist_ok=True,
+    has_header: bool = True,
+    headers: Optional[Sequence[str]] = None,
+) -> int:
+    """
+    Writes an iterator of lists to a file in csv format.
+    
+    Parameters
+    ----------
+    data : Iterable[Sequence]
+        [description]
+    file_path : Path
+        [description]
+    parents : bool, optional
+        [description], by default False
+    exist_ok : bool, optional
+        [description], by default True
+    has_header : bool, optional
+        First row of supplied data is the header, by default True
+    headers : Optional[Sequence[str]], optional
+        Headers to use if not supplied in data, by default None
+    
+    Returns
+    -------
+    int
+        Rows saved, not including a header
+    
+    Raises
+    ------
+    ValueError
+        Number of items in a row does not match number of headers.
+    """
+    if parents:
+        file_path.parent.mkdir(parents=parents, exist_ok=exist_ok)
+    with file_path.open("w", encoding="utf8", newline="") as file_out:
+        writer = csv.writer(file_out)
+        iterable_data = iter(data)
+
+        if has_header:
+            header_row = next(iterable_data)
+            writer.writerow(header_row)
+        else:
+            if headers is not None:
+                header_row = headers
+                writer.writerow(header_row)
+            else:
+                header_row = []
+        total_count = 0
+        for count, item in enumerate(iterable_data):
+            if count > 0 and has_header:
+                if len(header_row) > 0 and len(header_row) != len(item):
+                    raise ValueError(
+                        f"Header has {len(header_row)} but row has {len(item)} items"
+                    )
+                writer.writerow(item)
+                total_count = count
+    return total_count + 1
+
+
+def read_csv_to_row_factory(
+    file_in: TextIO,
+    row_factory: Callable[[Sequence[str], dict], Any],
+    headers_in_first_row: bool = True,
+    context: Optional[dict] = None,
+) -> Generator[Any, None, None]:
+    if context is None:
+        context = {}
+    reader = csv.reader(file_in)
+    if headers_in_first_row:
+        headers = next(reader)
+    else:
+        headers = []
+    factory = row_factory(headers, context)
+    return (factory(*row) for row in reader)
+
+
+def named_tuple_factory(headers, context):
+    header_override = context.get("header_override", None)
+    if header_override is not None:
+        headers = header_override
+
+    n_tuple = namedtuple("CsvRow", headers)
+
+    def factory(row):
+        if len(headers) != len(row):
+            raise ValueError(f"Header has {len(headers)} but row has {len(row)} items")
+        return n_tuple(*row)
+
+    return factory
+
+
+def tuple_factory(_headers, _context):
+    def factory(row):
+        return tuple(row)
+
+    return factory
+
+
+def dict_factory(headers, context):
+    header_override = context.get("header_override", None)
+    if header_override is not None:
+        headers = header_override
+
+    def factory(row):
+        if len(headers) != len(row):
+            raise ValueError(f"Header has {len(headers)} but row has {len(row)} items")
+        return dict(zip(headers, row))
+
+    return factory
+
+
+# def read_csv_to_named_tuple(
+#     file_in, use_header_row: bool, field_names: Optional[Sequence[str]] = None
+# ):
+#     if field_names is None:
+#         field_names = []
+#     reader = csv.reader(file_in)
+#     if use_header_row:
+#         field_names = next(reader)
+#     CsvRow = namedtuple("CsvRow", field_names)
+#     return (CsvRow(*row) for row in reader)
