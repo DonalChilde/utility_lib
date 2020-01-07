@@ -1,12 +1,5 @@
-"""[summary]
-
-https://stackoverflow.com/a/3431835/105844
-
-Returns:
-    [type] -- [description]
-
-Yields:
-    [type] -- [description]
+# Last edited on 2019-12-30T16:56:40Z
+"""A collection of file hashing utilities.
 """
 import hashlib
 from pathlib import Path
@@ -16,20 +9,39 @@ from typing import (
     ByteString,
     Callable,
     Dict,
-    Generator,
     Iterator,
     NamedTuple,
     Optional,
     Sequence,
+    Union,
 )
 
-VERSION = "0.1.0"
+VERSION = "1.0.0"
 
 
 def hash_a_byte_str_iterator(
     bytes_iterator: Iterator[ByteString], hasher: Any, as_hex_str: bool = False
-):
-    # https://stackoverflow.com/a/3431835/105844
+) -> Union[ByteString, str]:
+    """
+    Get the hash digest of a binary string iterator.
+
+    https://stackoverflow.com/a/3431835/105844
+    
+    Parameters
+    ----------
+    bytes_iterator : Iterator[ByteString]
+        The byte iterator
+    hasher : Any
+        The hash function from `hashlib`
+    as_hex_str : {'False','True'}, optional
+        Return the digest as bytes, or a hexidecimal string, by default False
+    
+    Returns
+    -------
+    Union[ByteString, str]
+        The digest of the input bytes, as bytes or a hexidcimal string, by default bytes.
+    """
+
     for block in bytes_iterator:
         hasher.update(block)
     return hasher.hexdigest() if as_hex_str else hasher.digest()
@@ -38,7 +50,24 @@ def hash_a_byte_str_iterator(
 def file_as_block_iterator(
     file_handle: BinaryIO, block_size: int = 65536
 ) -> Iterator[ByteString]:
-    # https://stackoverflow.com/a/3431835/105844
+    """
+    Make an iterator for a file opened in binary mode.
+
+    https://stackoverflow.com/a/3431835/105844
+    
+    Parameters
+    ----------
+    file_handle : BinaryIO
+        The handle for  file opened in binary mode.
+    block_size : int, optional
+        The size of the block bytes to read from the file, by default 65536
+    
+    Yields
+    -------
+    Iterator[ByteString]
+        An iterator of bytes.
+    """
+
     with file_handle:
         block = file_handle.read(block_size)
         while len(block) > 0:
@@ -46,49 +75,81 @@ def file_as_block_iterator(
             block = file_handle.read(block_size)
 
 
-def calculate_file_hash(
+def calculate_file_hash_from_path(
     file_path: Path, hasher: Any, block_size: int = 65536, as_hex_str: bool = True
-):
-    """[summary]
-    
-    https://stackoverflow.com/a/21565932/105844
-
-    Arguments:
-        file_path {Path} -- [description]
-        hasher {Any} -- [description]
-    
-    Keyword Arguments:
-        block_size {int} -- [description] (default: {65536})
-        as_hex_str {bool} -- [description] (default: {True})
-    
-    Raises:
-        ValueError: [description]
-    
-    Returns:
-        [type] -- [description]
+) -> Union[ByteString, str]:
     """
+    Calculate a hash digest for a given file path.
+
+    https://stackoverflow.com/a/21565932/105844
+    
+    Parameters
+    ----------
+    file_path : Path
+        The `pathlib.Path` to a file.
+    hasher : Any
+        The hash function from `hashlib`
+    block_size : int, optional
+        The size of the block bytes to read from the file, by default 65536
+    as_hex_str : {'True','False'}, optional
+        Return the digest as bytes, or a hexidecimal string, by default True
+    
+    Returns
+    -------
+    Union[ByteString, str]
+        The digest of the file, as bytes or a hexidcimal string, by default bytes.
+    
+    Raises
+    ------
+    ValueError
+        If the file_path does not exist or is not a file.
+    """
+
     if not file_path.exists() or not file_path.is_file():
         raise ValueError(f"{file_path} is not a file or does not exist")
 
-    # with open(file_path, "rb") as file_in:
-    #     for block in iter(lambda: file_in.read(block_size), b""):
-    #         hasher.update(block)
-    # if as_hex_str:
-    #     return hasher.hexdigest()
-    # return hasher.digest()
-
     with open(file_path, "rb") as file_in:
-        result = hash_a_byte_str_iterator(
-            bytes_iterator=file_as_block_iterator(
-                file_handle=file_in, block_size=block_size
-            ),
-            hasher=hasher,
-            as_hex_str=as_hex_str,
+        result = calculate_file_hash_from_file_handle(
+            file_in, hasher, block_size, as_hex_str
         )
         return result
-    return None
 
 
+def calculate_file_hash_from_file_handle(
+    file_handle: BinaryIO, hasher: Any, block_size: int = 65536, as_hex_str: bool = True
+) -> Union[ByteString, str]:
+    """
+    Calculate a hash digest for a given file handle opened in binary mode..
+
+    https://stackoverflow.com/a/21565932/105844
+    
+    Parameters
+    ----------
+    file_handle : BinaryIO
+        The handle for  file opened in binary mode.
+    hasher : Any
+        The hash function from `hashlib`
+    block_size : int, optional
+        The size of the block bytes to read from the file, by default 65536
+    as_hex_str : {'True','False'}, optional
+        Return the digest as bytes, or a hexidecimal string, by default True
+    
+    Returns
+    -------
+    Union[ByteString, str]
+        The digest of the file, as bytes or a hexidcimal string, by default bytes.
+    """
+    result = hash_a_byte_str_iterator(
+        bytes_iterator=file_as_block_iterator(
+            file_handle=file_handle, block_size=block_size
+        ),
+        hasher=hasher,
+        as_hex_str=as_hex_str,
+    )
+    return result
+
+
+# The guaranteed available hash methods (Python 3.7).
 HASH_METHODS: Dict[str, Callable] = {
     "blake2b": hashlib.blake2b,
     "blake2s": hashlib.blake2s,
@@ -107,7 +168,25 @@ HASH_METHODS: Dict[str, Callable] = {
 }
 
 
-def get_hasher(hasher_name: str):
+def get_hasher(hasher_name: str) -> Any:
+    """
+    Convenience method to get a hasher.
+
+    Parameters
+    ----------
+    hasher_name : {'blake2b','blake2s','md5','sha1','sha224','sha256','sha384','sha512','sha3_224','sha3_256','sha3_384','sha3_512'}, str
+        The name of a hasher.
+
+    Returns
+    -------
+    Any
+        A hash function from `hashlib`
+
+    Raises
+    ------
+    ValueError
+        If the requested name not found in `HASH_METHODS`
+    """
     lc_hasher_name = hasher_name.lower()
     hasher: Optional[Callable] = HASH_METHODS.get(lc_hasher_name, None)
     if hasher is None:
@@ -118,6 +197,16 @@ def get_hasher(hasher_name: str):
 
 
 class FileHash(NamedTuple):
+    """
+    Data structure to hold return from `file_hash` and `file_hash_generator`
+    
+    Parameters
+    ----------
+    file_path : Path
+    file_hash : str
+    hash_method : str
+    """
+
     file_path: Path
     file_hash: str
     hash_method: str
@@ -126,18 +215,45 @@ class FileHash(NamedTuple):
         return f"<FileHash(file_path={self.file_path}, file_hash={self.file_hash}, hash_method={self.hash_method})>"
 
 
-def get_file_hash(file_path: Path, hash_method: str) -> FileHash:
+def file_hasher(file_path: Path, hash_method: str) -> FileHash:
+    """
+    Convenience method to hash a file path.
+    
+    Parameters
+    ----------
+    file_path : Path
+        The `pathlib.Path` to a file.
+    hash_method : {'blake2b','blake2s','md5','sha1','sha224','sha256','sha384','sha512','sha3_224','sha3_256','sha3_384','sha3_512'}, str
+        The name of a hasher.
+    
+    Returns
+    -------
+    FileHash : `FileHash`
+    """
     hasher = get_hasher(hash_method)
-
-    file_hash_str = calculate_file_hash(file_path, hasher)
+    file_hash_str: str = calculate_file_hash_from_path(file_path, hasher)  # type: ignore
     return FileHash(file_path, file_hash_str, hash_method)
 
 
-def get_file_hash_generator(
+def file_hasher_generator(
     file_paths: Sequence[Path], hash_method: str
-) -> Generator[FileHash, None, None]:
+) -> Iterator[FileHash]:
+    """
+    Makes an iterator from a list of file paths that returns a `FileHash`
+    
+    Parameters
+    ----------
+    file_paths : Sequence[Path]
+        A sequence of  `pathlib.Path`s to files.
+    hash_method : {'blake2b','blake2s','md5','sha1','sha224','sha256','sha384','sha512','sha3_224','sha3_256','sha3_384','sha3_512'}, str
+        The name of a hasher.
+    
+    Returns
+    -------
+    Iterator[`FileHash`]
+    """
     generator = (
-        get_file_hash(file_path, hash_method)
+        file_hasher(file_path, hash_method)
         for file_path in file_paths
         if file_path.is_file()
     )

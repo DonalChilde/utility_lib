@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Callable, Sequence
+from typing import Any, Callable, Sequence, Dict
 from distutils.util import strtobool
 
 from utility_lib.file_utilities.csv_utililities import (
@@ -27,7 +27,7 @@ class MarketOrder:
 
     @staticmethod
     def from_strings(string_data: Sequence[str]):
-        values = {
+        values: Dict[str, Any] = {
             "duration": int(string_data[0]),
             "is_buy_order": bool(strtobool(string_data[1])),
             "issued": datetime.strptime(string_data[2], "%Y-%m-%dT%H:%M:%SZ"),

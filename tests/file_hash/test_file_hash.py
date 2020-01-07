@@ -4,7 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from utility_lib import file_hash
+from utility_lib.file_hash import file_hash
+
+
+# TODO test raising exceptions
 
 
 @pytest.fixture(scope="function")
@@ -88,7 +91,7 @@ def is_hex(test_string: str):
 def test_file_hash(hash_test_data):
     # file_path = Path(__file__)
     file_path = hash_test_data["test_files"]["test_data_1"]["test_path"]
-    result = file_hash.get_file_hash(file_path, "md5")
+    result = file_hash.file_hasher(file_path, "md5")
     md5_hash = md5sum(file_path)
     assert is_hex(result.file_hash)
     assert result.file_hash == md5_hash
@@ -133,7 +136,7 @@ def test_md5_methods():
             file_as_blockiter(file_in), hashlib.md5(), ashexstr=True
         )
     assert hash_1 == hash_2
-    hash_3 = file_hash.calculate_file_hash(file_path, hashlib.md5())
+    hash_3 = file_hash.calculate_file_hash_from_path(file_path, hashlib.md5())
     assert hash_1 == hash_3
     print(hash_1)
 
@@ -141,9 +144,9 @@ def test_md5_methods():
 def test_file_hash_generator(hash_test_data):
     dir_path: Path = hash_test_data["test_data_root_dir"]
     file_path_list = list(dir_path.glob("**/*"))
-    f_gen = file_hash.get_file_hash_generator(file_path_list, "md5")
+    f_gen = file_hash.file_hasher_generator(file_path_list, "md5")
     from_list = [
-        file_hash.get_file_hash(file_path, "md5")
+        file_hash.file_hasher(file_path, "md5")
         for file_path in file_path_list
         if file_path.is_file()
     ]
@@ -166,7 +169,7 @@ def test_file_hash_generator(hash_test_data):
 def test_file_hash_generator2(hash_test_data):
     dir_path = Path(__file__).parent
     file_path_list = dir_path.glob("**/*")
-    f_gen = file_hash.get_file_hash_generator(file_path_list, "md5")
+    f_gen = file_hash.file_hasher_generator(file_path_list, "md5")
     total_count = 0
     for count, value in enumerate(f_gen):
         total_count = count + 1
@@ -185,5 +188,5 @@ def test_all_hashers(hash_test_data):
             hasher = file_hash.get_hasher(hash_method)
             hasher.update(value["data"])
             string_hash = hasher.hexdigest()
-            file_hash_data = file_hash.get_file_hash(value["test_path"], hash_method)
+            file_hash_data = file_hash.file_hasher(value["test_path"], hash_method)
             assert string_hash == file_hash_data.file_hash
