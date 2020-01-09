@@ -38,6 +38,9 @@ class RemappedHeader:
 
 
 # TODO replace Any with generics?
+# TODO add ability to parse commented csv files, and pull key-value data from comments.
+#       maybe make a line pre-reader? what about multi line cells? subclass csv reader?
+#       maybe split stream after comments?
 class RecordReader(ABC):
     """
     An iterable record reader that translates a line from csv into
