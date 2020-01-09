@@ -258,3 +258,35 @@ def file_hasher_generator(
         if file_path.is_file()
     )
     return generator
+
+
+def file_hasher_generator2(
+    file_paths: Sequence[Path], hash_method: str, path_filter: Callable[[Path], bool]
+) -> Iterator[FileHash]:
+    """
+    Makes an iterator from a list of file paths that returns a `FileHash`
+    
+    Parameters
+    ----------
+    file_paths : Sequence[Path]
+        A sequence of  `pathlib.Path`s to files.
+    hash_method : {'blake2b','blake2s','md5','sha1','sha224','sha256','sha384','sha512','sha3_224','sha3_256','sha3_384','sha3_512'}, str
+        The name of a hasher.
+    
+    Returns
+    -------
+    Iterator[`FileHash`]
+    """
+    generator = (
+        file_hasher(file_path, hash_method)
+        for file_path in file_paths
+        if path_filter(file_path)
+    )
+    return generator
+
+
+class IsFilePath:
+    def __call__(self, file_path: Path) -> bool:
+        if file_path.exists() and file_path.is_file():
+            return True
+        return False
