@@ -2,7 +2,8 @@ import uuid
 from collections import OrderedDict, namedtuple
 from dataclasses import dataclass
 
-from utility_lib.datetime_utilities.timer import Timer, simple_timer
+# from utility_lib.datetime_utilities.timer import Timer, simple_timer
+from utility_lib.datetime_utilities.timer import Timer, context_timer
 
 NTTEST = namedtuple("NTTest", ["val1", "val2", "val3"])
 
@@ -18,32 +19,32 @@ def test_simple_timer():
     print("-----testing simple_timer-----")
     test_range = 1000
     data_gen = uuid.uuid4
-    with simple_timer("tuple"):
+    with context_timer("tuple"):
         for x in range(test_range):
             foo = (data_gen(), data_gen(), data_gen())
-    with simple_timer("empty tuple"):
+    with context_timer("empty tuple"):
         for x in range(test_range):
             foo = (0, 0, 0)
-    with simple_timer("dict"):
+    with context_timer("dict"):
         for x in range(test_range):
             foo = {"val1": data_gen(), "val2": data_gen(), "val3": data_gen()}
-    with simple_timer("empty dict"):
+    with context_timer("empty dict"):
         for x in range(test_range):
             foo: dict = {"val1": 0, "val2": 0, "val3": 0}
-    with simple_timer("named tuple"):
+    with context_timer("named tuple"):
         for x in range(test_range):
             foo = NTTEST(data_gen(), data_gen(), data_gen())
-    with simple_timer("empty named tuple"):
+    with context_timer("empty named tuple"):
         for x in range(test_range):
             foo = NTTEST(0, 0, 0)
 
-    with simple_timer("data class"):
+    with context_timer("data class"):
         for x in range(test_range):
             foo = DCTest(data_gen(), data_gen(), data_gen())
-    with simple_timer("empty data class"):
+    with context_timer("empty data class"):
         for x in range(test_range):
             foo = DCTest(0, 0, 0)
-    with simple_timer("pass"):
+    with context_timer("pass"):
         for x in range(test_range):
             pass
 
@@ -62,33 +63,35 @@ def test_ordered_dict_access_time():
 
     # Note that this takes longer than direct access, but
     # it does not get longer with larger dict sizes. n(1)
-    with simple_timer("ordered dict reversed"):
+    with context_timer("ordered dict reversed"):
         for x in range(100):
             foo = ordered_dict[next(reversed(ordered_dict))]
 
-    with simple_timer("ordered dict direct access"):
+    with context_timer("ordered dict direct access"):
         for x in range(100):
             foo = ordered_dict[last_sample]
 
 
-def test_timer_class():
-    test_range = 1000
-    data_gen = uuid.uuid4
-    print("\n-----testing Timer class-----")
-    timer = Timer("Test the Timer class")
-    timer.start_timer()
+# TODO Timer class has been renamed Timer1, and deprecated. Need to update new Timer class, and write tests.
 
-    timer.start_event("tuple")
-    for x in range(test_range):
-        foo = (data_gen(), data_gen(), data_gen())
-    timer.finish_event("tuple")
-    timer.simple_event_message("tuple")
+# def test_timer_class():
+#     test_range = 1000
+#     data_gen = uuid.uuid4
+#     print("\n-----testing Timer class-----")
+#     timer = Timer("Test the Timer class")
+#     timer.start_timer()
 
-    timer.start_event("empty tuple")
-    for x in range(test_range):
-        foo = (0, 0, 0)
-    timer.finish_event("empty tuple")
-    timer.simple_event_message("empty tuple")
-    # timer.simple_timer_message()
-    timer.end_timer()
-    timer.simple_timer_message()
+#     timer.start_event("tuple")
+#     for x in range(test_range):
+#         foo = (data_gen(), data_gen(), data_gen())
+#     timer.finish_event("tuple")
+#     timer.simple_event_message("tuple")
+
+#     timer.start_event("empty tuple")
+#     for x in range(test_range):
+#         foo = (0, 0, 0)
+#     timer.finish_event("empty tuple")
+#     timer.simple_event_message("empty tuple")
+#     # timer.simple_timer_message()
+#     timer.end_timer()
+#     timer.simple_timer_message()
