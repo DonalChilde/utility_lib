@@ -5,41 +5,27 @@ import logging
 
 #### setting up logger ####
 logger = logging.getLogger(__name__)
-
-#### Log Level ####
-# NOTSET=0, DEBUG=10, INFO=20, WARN=30, ERROR=40, and CRITICAL=50
-# log_level = logging.DEBUG
-# log_level = logging.INFO
-log_level = logging.NOTSET
-logger.setLevel(log_level)
-
-#### Log Handler ####
-log_formatter = logging.Formatter(
-    "%(asctime)s — %(name)s — %(levelname)s — %(funcName)s:%(lineno)d — %(message)s",
-    datefmt="%d-%b-%y %H:%M:%S",
-)
-# log_handler = logging.StreamHandler(stdout)
-log_handler = logging.StreamHandler()
-log_handler.setFormatter(log_formatter)
-# logger.addHandler(log_handler)
+logger.addHandler(logging.NullHandler())
 
 
-def loadJson(path: Path) -> Any:
+def load_json(file_path: Path) -> Any:
     try:
-        with open(path, "r") as jsonFile:
-            data = json.load(jsonFile)
+        with open(file_path, "r") as json_file:
+            data = json.load(json_file)
         return data
     except Exception as e:
-        logger.exception(f"Error trying to load json file from {path}")
+        logger.exception("Error trying to load json file from %s", file_path)
         raise e
 
 
-def saveJson(data: Any, path: Path, indent=2, sort_keys=False) -> bool:
+def save_json(data: Any, file_path: Path, indent=2, sort_keys=False) -> bool:
 
     try:
-        with open(path, "w") as jsonFile:
-            json.dump(data, jsonFile, indent=indent, sort_keys=sort_keys)
+        if not file_path.parent.exists():
+            file_path.parent.mkdir(parents=True)
+        with open(file_path, "w") as json_file:
+            json.dump(data, json_file, indent=indent, sort_keys=sort_keys)
         return True
     except Exception as e:
-        logger.exception(f"Error trying to save json data to {path}")
+        logger.exception("Error trying to save json data to %s", file_path)
         raise e

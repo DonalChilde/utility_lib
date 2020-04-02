@@ -296,7 +296,11 @@ def read_records_from_file(file_path: Path, record_reader: RecordReader):
 #
 ################################################################################
 def write_list_of_dicts_to_csv(
-    data: Sequence[Dict[str, Any]], file_path: Path, parents=False, exist_ok=True
+    data: Sequence[Dict[str, Any]],
+    file_path: Path,
+    parents=False,
+    exist_ok=True,
+    field_names=None,
 ) -> int:
     """
     Save a list of dicts to csv. Makes parent directories if they don't exist.
@@ -311,6 +315,8 @@ def write_list_of_dicts_to_csv(
         Make parent directories if they don't exist. As used by `Path.mkdir`, by default False
     exist_ok : bool, optional
         Suppress exception if parent directory exists as directory. As used by `Path.mkdir`, by default True
+    field_names : List[str], optional
+        Optionally reorder fields, by default None
 
     Returns
     -------
@@ -324,8 +330,10 @@ def write_list_of_dicts_to_csv(
     """
     if parents:
         file_path.parent.mkdir(parents=parents, exist_ok=exist_ok)
+    if field_names is None:
+        field_names = list(data[0].keys())
     with file_path.open("w", encoding="utf8", newline="") as file_out:
-        writer = csv.DictWriter(file_out, fieldnames=list(data[0].keys()))
+        writer = csv.DictWriter(file_out, fieldnames=field_names)
         writer.writeheader()
         total_count = 0
         for count, item in enumerate(data):

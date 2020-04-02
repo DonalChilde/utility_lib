@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime, timezone
 from typing import Sequence
 
 from utility_lib.list_utilities.list_utilities import distance_in_list, simple_filter
@@ -50,3 +50,7 @@ def pad_to_end_of_week(date_: date) -> date:
     dow_index = 6 - date_.weekday()
     new_date = date_ + timedelta(hours=24 * dow_index)
     return new_date
+
+
+def iso_date_now(tz=timezone.utc):
+    return datetime.now(tz).date().isoformat()

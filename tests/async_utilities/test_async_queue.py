@@ -28,7 +28,7 @@ from utility_lib.async_utilities.async_queue import (
 def test_basic_runner():
     actions = []
 
-    for x in range(20):
+    for _ in range(20):
         action = ExampleAction(x)
         actions.append(action)
 
