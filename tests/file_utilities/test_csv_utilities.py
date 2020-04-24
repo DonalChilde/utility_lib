@@ -1,20 +1,21 @@
-import pytest
-from pprint import PrettyPrinter
 from pathlib import Path
+from pprint import PrettyPrinter
+
+import pytest
 
 from utility_lib.file_utilities.csv_utililities import (
-    write_list_to_csv,
-    write_record_to_csv,
-    read_records_from_file,
+    DictRecordReader,
+    DictRecordWriter,
+    NamedTupleRecordReader,
+    NamedTupleRecordWriter,
     RecordReader,
     RecordWriter,
     RemappedHeader,
-    TupleRecordWriter,
     TupleRecordReader,
-    NamedTupleRecordReader,
-    NamedTupleRecordWriter,
-    DictRecordReader,
-    DictRecordWriter,
+    TupleRecordWriter,
+    read_records_from_file,
+    write_list_to_csv,
+    write_record_to_csv,
 )
 from utility_lib.file_utilities.eve_market_orders import (
     MarketOrderRecordReader,
@@ -332,4 +333,3 @@ def test_data_list_of_tuple_str():
         ),
     ]
     return data
-
