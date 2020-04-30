@@ -2,7 +2,7 @@ import contextlib
 from collections import OrderedDict
 from string import Template
 from time import perf_counter_ns
-from typing import Optional, List, Sequence
+from typing import List, Optional, Sequence
 
 
 class Timer1:
@@ -66,7 +66,7 @@ def context_timer(label, time_spec="seconds"):
     if time_spec == "nanoseconds":
         print(f"{label} took {perf_counter_ns()-start} nano seconds.")
     else:
-        print(f"{label} took {(perf_counter_ns()-start)/100000000:9f} seconds.")
+        print(f"{label} took {(perf_counter_ns()-start)/1000000000:9f} seconds.")
 
 
 class Interval:
@@ -205,4 +205,3 @@ class Timer:
         # if printed, intervals with no name use list index as name.
         template = Template(template_string)
         raise NotImplementedError
-
