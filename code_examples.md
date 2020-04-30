@@ -47,8 +47,8 @@ def logger(test_log_path):
     _logger = logging.getLogger(__name__)
     log_path = test_log_path / Path("test-logs")
     log_level = logging.DEBUG
-    if not os.path.exists(log_path):
-        os.mkdir(log_path)
+    if not log_path.exists():
+        log_path.mkdir(parents=True)
     file_handler = RotatingFileHandler(
         log_path / Path(log_file_name), maxBytes=102400, backupCount=10
     )
@@ -60,7 +60,9 @@ def logger(test_log_path):
     ############################################################
     # NOTE add file handler to other library modules as needed #
     ############################################################
+    # async_logger = logging.getLogger("eve_esi.utility_lib.async_queue")
     async_logger = logging.getLogger("eve_esi")
+    async_logger.setLevel(log_level)
     async_logger.addHandler(file_handler)
     return _logger
 
