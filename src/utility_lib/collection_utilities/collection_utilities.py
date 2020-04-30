@@ -15,6 +15,12 @@ from typing import (
 SortSpec = NamedTuple("SortSpec", [("sort_key", Union[str, int]), ("reversed", bool)])
 
 
+def optional_collection(argument, collection_factory):
+    if argument is None:
+        return collection_factory()
+    return argument
+
+
 def sort_in_place(
     xs: List[Union[Sequence, Any]], specs: Sequence[SortSpec], use_get_item: bool,
 ):
