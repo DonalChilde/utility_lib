@@ -1,5 +1,6 @@
 import contextlib
 from collections import OrderedDict
+from functools import wraps
 from string import Template
 from time import perf_counter_ns
 from typing import List, Optional, Sequence
@@ -67,6 +68,25 @@ def context_timer(label, time_spec="seconds"):
         print(f"{label} took {perf_counter_ns()-start} nano seconds.")
     else:
         print(f"{label} took {(perf_counter_ns()-start)/1000000000:9f} seconds.")
+
+
+def timeit(method, logger=None):
+    # https://rednafi.github.io/digressions/python/2020/04/21/python-concurrent-futures.html
+    @wraps(method)
+    def wrapper(*args, **kwargs):
+        start = perf_counter_ns()
+        result = method(*args, **kwargs)
+        if logger is None:
+            print(
+                f"{method.__name__} => {(perf_counter_ns()-start)/1000000000:9f} seconds."
+            )
+        else:
+            dur = f"{(perf_counter_ns()-start)/1000000000:9f}"
+            logger.info("%s => %s seconds.", method.__name__, dur)
+
+        return result
+
+    return wrapper
 
 
 class Interval:
